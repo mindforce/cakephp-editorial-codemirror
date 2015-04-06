@@ -22,25 +22,29 @@ class CodemirrorHelper extends EditorialHelper {
 		]
 	];
 
-	public function initialize(){
-		$this->Html->css('Editorial/Codemirror.codemirror.css', ['block' => true]);
+	public function assets($block = false){
+		$assets = '';
+        $assets .= $this->Html->css('Editorial/Codemirror.codemirror.css', ['block' => $block]);
 		$codemirrorTheme = $this->config('options.theme');
 		if(!empty($codemirrorTheme)) {
-			$this->Html->css('Editorial/Codemirror.theme/'.$codemirrorTheme.'.css', ['block' => true]);
+			$assets .= $this->Html->css('Editorial/Codemirror.theme/'.$codemirrorTheme.'.css', ['block' => $block]);
 		}
-		$this->Html->script('Editorial/Codemirror.codemirror.js', ['block' => true]);
+		$assets .= $this->Html->script('Editorial/Codemirror.codemirror.js', ['block' => $block]);
 		$codemirrorMode = $this->config('options.mode');
 		if(!empty($codemirrorTheme)) {
-			$this->Html->script('Editorial/Codemirror.mode/'.$codemirrorMode.'/'.$codemirrorMode.'.js', ['block' => true]);
+			$assets .= $this->Html->script('Editorial/Codemirror.mode/'.$codemirrorMode.'/'.$codemirrorMode.'.js', ['block' => $block]);
 		}
 		$codemirrorKeymap = $this->config('options.keymap');
 		if(!empty($codemirrorKeymap)) {
-			$this->Html->script('Editorial/Codemirror.keymap/'.$codemirrorKeymap.'.js', ['block' => true]);
+			$assets .= $this->Html->script('Editorial/Codemirror.keymap/'.$codemirrorKeymap.'.js', ['block' => $block]);
 		}
-		$this->Html->script('Editorial/Codemirror.formatting.min.js', ['block' => true]);
+		$assets .= $this->Html->script('Editorial/Codemirror.formatting.min.js', ['block' => $block]);
+        if(!$block){
+            return $assets;
+        }
 	}
 
-	public function connect($content = null){
+	public function connect($content = null, $block = false){
 		if(empty($content)) {
 			return;
 		}
@@ -48,17 +52,19 @@ class CodemirrorHelper extends EditorialHelper {
 			.Configure::read('Editorial.class').'\"[^>]*>.*<\/textarea>)/isU';
 		$js = '';
 		if(preg_match_all($searchRegex, $content, $matches)){
-			$js .= "window.onload = function() {\n";
 			$editorOptions = json_encode($this->config('options'));
 			foreach ($matches[0] as $input){
 				if(preg_match('/<textarea.*id\=\"(.*)\"[^>]*>.*<\/textarea>/isU', $input, $idMatches)) {
 					$js .= "\tCodeMirror.fromTextArea(document.getElementById('".$idMatches[1]."'), ".$editorOptions.");\n";
 				}
 			}
-			$js .= "};\n";
+            if(!$this->request->is('ajax')){
+                $js = "window.onload = function() {\n".$js."};\n";
+            }
 		}
 		if(!empty($js)){
-			$this->Html->scriptBlock($js, ['block' => true]);
+			return $this->Html->scriptBlock($js, ['block' => $block]);
 		}
+        return;
 	}
 }
