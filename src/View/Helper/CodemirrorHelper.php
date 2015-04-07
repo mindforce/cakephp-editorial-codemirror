@@ -13,6 +13,7 @@ class CodemirrorHelper extends EditorialHelper {
  * @var array
  */
 	protected $_defaultConfig = [
+        'block' => 'false',
 		'options' => [
 			'mode' => 'xml',
 			'theme' => 'eclipse',
@@ -22,7 +23,7 @@ class CodemirrorHelper extends EditorialHelper {
 		]
 	];
 
-	public function assets($block = false){
+	public function assets($block = true){
 		$assets = '';
         $assets .= $this->Html->css('Editorial/Codemirror.codemirror.css', ['block' => $block]);
 		$codemirrorTheme = $this->config('options.theme');
@@ -44,7 +45,7 @@ class CodemirrorHelper extends EditorialHelper {
         }
 	}
 
-	public function connect($content = null, $block = false){
+	public function connect($content = null, $block = true){
 		if(empty($content)) {
 			return;
 		}
@@ -58,7 +59,9 @@ class CodemirrorHelper extends EditorialHelper {
 					$js .= "\tCodeMirror.fromTextArea(document.getElementById('".$idMatches[1]."'), ".$editorOptions.");\n";
 				}
 			}
-            if(!$this->request->is('ajax')){
+            if($this->request->is('ajax')){
+                $js = "setTimeout(function() { ".$js." }, 200)";
+            } else {
                 $js = "window.onload = function() {\n".$js."};\n";
             }
 		}
