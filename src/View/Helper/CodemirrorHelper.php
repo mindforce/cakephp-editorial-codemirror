@@ -51,19 +51,22 @@ class CodemirrorHelper extends EditorialHelper {
 		}
 		$searchRegex = '/(<textarea.*class\=\".*'
 			.Configure::read('Editorial.class').'\"[^>]*>.*<\/textarea>)/isU';
-		$js = '';
+		$js = '';$globals = [];
 		if(preg_match_all($searchRegex, $content, $matches)){
 			$editorOptions = json_encode($this->config('options'));
 			foreach ($matches[0] as $input){
 				if(preg_match('/<textarea.*id\=\"(.*)\"[^>]*>.*<\/textarea>/isU', $input, $idMatches)) {
-					$js .= "\tCodeMirror.fromTextArea(document.getElementById('".$idMatches[1]."'), ".$editorOptions.");\n";
-				}
+					$js .= "\t cmeditor_".$idMatches[1]." = CodeMirror.fromTextArea(document.getElementById('".$idMatches[1]."'), ".$editorOptions.");\n";
+                    $globals[] =" var cmeditor_".$idMatches[1]." = false;";
+                }
 			}
             if($this->request->is('ajax')){
                 $js = "setTimeout(function() { ".$js." }, 200)";
             } else {
                 $js = "window.onload = function() {\n".$js."};\n";
             }
+            //Globalize Codemirror instance variables as placeholders
+            $js = implode("\n", $globals)."\n".$js;
 		}
 		if(!empty($js)){
 			return $this->Html->scriptBlock($js, ['block' => $block]);
